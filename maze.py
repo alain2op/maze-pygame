@@ -2,6 +2,15 @@ import numpy as np
 import pygame
 import random
 import math
+def tile_checker(maze):
+    rows, cols = maze.shape
+
+    for i in range(rows - 1):
+        for j in range(cols - 1):
+            if maze[i, j] == 0 and maze[i, j+1] == 0 and maze[i+1, j] == 0 and maze[i+1, j+1] == 0:
+                return False
+    
+    return True
 #after each iteration, the probability to move towards end point increases of the path using this fn
 def probs_change(probs,inc,size):
     for i in range(4):
@@ -46,29 +55,37 @@ def path_generator(size,start,end):
             tile=start
             maze[int(tile[0]),int(tile[1])]=0
         else:
-            if(tile[0]/(size-1)==0):
-                move=np.array([-1,0])
-                choice=edge_choice(probs,move,moves)
-            elif(tile[0]/(size-1)==1):
-                move=np.array([1,0])
-                choice=edge_choice(probs,move,moves)
-            elif(tile[1]/(size-1)==0):
-                move=np.array([0,-1])
-                choice=edge_choice(probs,move,moves)
-            elif(tile[1]/(size-1)==1):
-                move=np.array([0,1])
-                choice=edge_choice(probs,move,moves)
-            else:
-                choice=random.choices(list(moves),probs)[0]
-            tile[0]+=choice[0]
-            tile[1]+=choice[1]
-            maze[int(tile[0]),int(tile[1])]=0
-            probs=probs_change(probs,inc,size)
+            while True:
+                if(tile[0]/(size-1)==0):
+                    move=np.array([-1,0])
+                    choice=edge_choice(probs,move,moves)
+                elif(tile[0]/(size-1)==1):
+                    move=np.array([1,0])
+                    choice=edge_choice(probs,move,moves)
+                elif(tile[1]/(size-1)==0):
+                    move=np.array([0,-1])
+                    choice=edge_choice(probs,move,moves)
+                elif(tile[1]/(size-1)==1):
+                    move=np.array([0,1])
+                    choice=edge_choice(probs,move,moves)
+                else:
+                    choice=random.choices(list(moves),probs)[0]
+                tile[0]+=choice[0]
+                tile[1]+=choice[1]
+                maze[int(tile[0]),int(tile[1])]=0
+                if(tile_checker(maze)):
+                    probs=probs_change(probs,inc,size)
+                    break
+                else:
+                    maze[int(tile[0]),int(tile[1])]=1
+                    tile[0]-=choice[0]
+                    tile[1]-=choice[1]
     return maze
 def maze_generator(level):
     size=5+2*level
     start=np.array([(size-1)/2,(size-1)/2])
     vertex=random.randint(0,3)
+    moves=(np.array([0,1]),np.array([1,0]),np.array([0,-1]),np.array([-1,0]))
     end=np.array([0,0])
     if vertex==0:
         end=np.array([0,0])
@@ -79,6 +96,33 @@ def maze_generator(level):
     else:
         end=np.array([0,size-1])
     maze=path_generator(size,start,end)
+    for i in range(0):
+        zeros=np.where(maze==0)
+        poss_moves=[]
+        rand_zero=random.randint(0,zeros[0].size-1)
+        tile=np.array([zeros[0][rand_zero],zeros[1][rand_zero]])
+        if((tile[0]/(size-1)==0 or tile[0]/(size-1)==1) and (tile[1]/(size-1)==0 or tile[1]/(size-1)==1)):
+            continue
+        elif(tile[0]/(size-1)==0):
+            poss_moves=[0,1,2]
+        elif(tile[0]/(size-1)==1):
+            poss_moves=[0,2,3]
+        elif(tile[1]/(size-1)==1):
+            poss_moves=[1,2,3]
+        elif(tile[1]/(size-1)==0):
+            poss_moves=[0,1,3]
+        else:
+            poss_moves=[0,1,2,3]
+        while(len(poss_moves)>0):
+            move=random.choice(poss_moves)
+            tile+=moves[move]
+            maze[int(tile[0]),int(tile[1])]=0
+            if tile_checker(maze):
+                break
+            else:
+                maze[int(tile[0]),int(tile[1])]=1
+                tile-=moves[move]
+                poss_moves.remove(move)
     return maze
 
 pygame.init()
