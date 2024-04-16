@@ -28,13 +28,13 @@ def tile_checker(maze,tile):
 def probs_change(probs,inc,size):
     for i in range(4):
         if i in inc:
-            probs[i]+=0.02*8/(size+1)
+            probs[i]+=0.03*(8/(size+1))**2
             if probs[i]>0.5:
-                probs[i]=0.4
+                probs[i]=0.35
         else:
-            probs[i]-=0.02*8/(size+1)
+            probs[i]-=0.03*(8/(size+1))**2
             if probs[i]<0:
-                probs[i]=0.1
+                probs[i]=0.15
     return probs
 def path_generator(size,start,end):
     path_tiles=[]
@@ -59,7 +59,7 @@ def path_generator(size,start,end):
         if(x_edge and y_edge):
             maze=np.ones((size,size))
             probs=probs_init[:]
-            tile=start[:]
+            tile=np.array([(size-1)/2,(size-1)/2])
             maze[int(tile[0]),int(tile[1])]=0
         else:
             cmoves=moves[:]
@@ -68,7 +68,8 @@ def path_generator(size,start,end):
                 if(len(cmoves)==0):
                     maze=np.ones((size,size))
                     probs=probs_init[:]
-                    tile=start[:]
+                    tile=np.array([(size-1)/2,(size-1)/2])
+                    print("restarting\n",tile)
                     maze[int(tile[0]),int(tile[1])]=0
                     break
                     # x,y=int(tile[0]),int(tile[1])
@@ -163,7 +164,7 @@ def path_generator(size,start,end):
                 if(tile_checker(maze,tile)):
                     probs=probs_change(probs,inc,size)
                     print(maze,'\n')
-                    print(count)
+                    print(count,start)
                     count+=1
                     break
                 else:
@@ -227,8 +228,8 @@ def maze_generator(level):
     return maze,path
 
 pygame.init()
-tile_size = 50
-level=7
+tile_size = 30
+level=9
 centre=np.array([2+level,2+level])
 maze,path = maze_generator(level)
 window_width = maze.shape[1] * tile_size
