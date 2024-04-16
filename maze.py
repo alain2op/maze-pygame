@@ -43,6 +43,7 @@ def path_generator(size,start,end):
     moves=[np.array([0,1]),np.array([1,0]),np.array([0,-1]),np.array([-1,0])]
     probs=[]
     inc=[]
+    count=0
     for i in range(4):
         if np.any(moves[i]==dirs):
             probs.append(0.1)
@@ -161,6 +162,9 @@ def path_generator(size,start,end):
                     cprobs.pop(index)
                 if(tile_checker(maze,tile)):
                     probs=probs_change(probs,inc,size)
+                    print(maze,'\n')
+                    print(count)
+                    count+=1
                     break
                 else:
                     if(not already):
@@ -184,7 +188,7 @@ def maze_generator(level):
         end=np.array([0,size-1])
     maze=path_generator(size,start,end)
     path=np.copy(maze)
-    for i in range(5000):
+    for i in range(10000):
         zeros=np.where(maze==0)
         poss_moves=[]
         rand_zero=random.randint(0,zeros[0].size-1)
@@ -220,12 +224,13 @@ def maze_generator(level):
     maze[endx,cendy]=1
     maze[cendx,cendy]=1
     maze[cendx,endy]=1
-    print(endx,endy,cendx,cendy)
     return maze,path
 
 pygame.init()
 tile_size = 50
-maze,path = maze_generator(5)
+level=7
+centre=np.array([2+level,2+level])
+maze,path = maze_generator(level)
 window_width = maze.shape[1] * tile_size
 window_height = maze.shape[0] * tile_size
 window = pygame.display.set_mode((window_width, window_height))
@@ -249,6 +254,6 @@ while running:
             else:
                 color=BLACK
             pygame.draw.rect(window, color, (x * tile_size, y * tile_size, tile_size, tile_size))
-    pygame.draw.rect(window,BLUE, (7 * tile_size, 7* tile_size, tile_size, tile_size))
+    pygame.draw.rect(window,BLUE, (centre[0] * tile_size, centre[1]* tile_size, tile_size, tile_size))
     pygame.display.update()
 pygame.quit()
