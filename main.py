@@ -5,7 +5,7 @@ import numpy as np
 import player_file
 SIZE=5
 TILE_SIZE=100
-MOVEMENT_DELAY = 100  # in milliseconds
+MOVEMENT_DELAY = 250  # in milliseconds
 
 
 pygame.init()
@@ -30,9 +30,9 @@ pressed_keys = {}
 last_movement_time = pygame.time.get_ticks()
 floor=int((size-1)/2)
 maze_file=open("maze.txt","w")
-maze_file.write("-----path-----------")
+maze_file.write("\n-----path-----------\n")
 maze_file.write(str(generated_path))
-maze_file.write("-------maze---------")
+maze_file.write("\n-------maze---------\n")
 maze_file.write(str(generated_maze))
 maze_file.close()
 while running:
@@ -76,15 +76,20 @@ while running:
     player_file.rotate(player1, orientation)
 
     window.fill(WHITE)
+    img=pygame.image.load("cloud.jpeg")
     for y in range(generated_maze.shape[0]):
         for x in range(generated_maze.shape[1]):
-            if generated_path[player1.floor,y,x]==0:
-                color=GREEN
+            if generated_maze[player1.floor,y,x]==0 and player1.floor>0 and player1.floor<size-1 and generated_maze[player1.floor-1,y,x]==0 and generated_maze[player1.floor+1,y,x]==0 :
+                img=pygame.image.load("up_down.jpg")
+            elif generated_maze[player1.floor,y,x]==0 and player1.floor>0 and generated_maze[player1.floor-1,y,x]==0:
+                img=pygame.image.load("down.jpg")
+            elif generated_maze[player1.floor,y,x]==0 and player1.floor<size-1 and generated_maze[player1.floor+1,y,x]==0:
+                img=pygame.image.load("up.jpg")
             elif generated_maze[player1.floor,y,x]==0:
-                color=WHITE
-            else:
-                color = BLACK
-            pygame.draw.rect(window, color, (x * tile_size, y * tile_size, tile_size, tile_size))
+                img=pygame.image.load("white.jpg")
+            elif generated_maze[player1.floor,y,x]==1:
+                img=pygame.image.load("black.jpg")
+            window.blit(pygame.transform.scale(img, (tile_size, tile_size)), (x * tile_size, y * tile_size))
     z,y,x = player1.tile[0], player1.tile[1],player1.tile[2]
     image = player1.images[player1.orientation - 1]
     image=pygame.image.load("ball.jpeg")

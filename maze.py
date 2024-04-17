@@ -90,7 +90,7 @@ def path_generator(size,start,end):
     #the path starts from centre and moves while checking it doesnt form any loops in the maze
     # if the path enters the wrong corner(not end) or if the path doesnt have any move without forming loops,then the algorithm starts again
     solution=open("path.txt","w")
-    while(tile[0]!=end[0] or tile[1]!=end[1]):
+    while(tile[0]!=end[0] or tile[1]!=end[1] or tile[2]!=end[2]):
         #whiel loop runs until a move is found
         x_edge=(tile[0]==0) or (tile[0]==size-1)
         y_edge=(tile[1]==0) or (tile[1]==size-1)
@@ -178,7 +178,6 @@ def path_generator(size,start,end):
                     possible_probs.pop(index)
                 #loop ends if finally tile_checker is true
                 if(tile_checker(maze,tile)):
-                    print()
                     probs=probs_change(probs,inc,size)
                     solution.write(translator(choice))
                     solution.write("\n")
@@ -218,6 +217,7 @@ def maze_generator(size):
         end=np.array([size-1,size-1,size-1])
     elif vertex==7:
         end=np.array([0,size-1,size-1])
+    print(start,end)
     maze=path_generator(size,start,end)
     path=np.copy(maze)
     for i in range(ITERATIONS):
