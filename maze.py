@@ -58,8 +58,8 @@ def probs_change(probs,inc,moves):
     for i in range(6):
         if i in inc:
             if moves[i][1]==0 and moves[i][2]==0:
-                probs[i]+=0.005
-                if probs[i]>0.18:
+                probs[i]+=0.003
+                if probs[i]>0.12:
                     probs[i]=0.12
             else:
                 probs[i]+=0.01
@@ -67,13 +67,13 @@ def probs_change(probs,inc,moves):
                     probs[i]=0.30               
         else:
             if moves[i][1]==0 and moves[i][2]==0:
-                probs[i]-=0.005
+                probs[i]-=0.003
                 if probs[i]<0:
                     probs[i]=0.03
             else:
                 probs[i]-=0.01
                 if probs[i]<0:
-                    probs[i]=0.12
+                    probs[i]=0.06
     return probs
 #this function generates only one path from start to end.
 #the algorithm uses probabilities to generate moves for the path
@@ -196,7 +196,6 @@ def path_generator(size,start,end,floors):
                 #loop ends if finally tile_checker is true
                 if(tile_checker(maze,tile)):
                     probs=probs_change(probs,inc,moves)
-                    print(probs)
                     solution.write(translator(choice))
                     solution.write("\n")
                     break
@@ -207,7 +206,6 @@ def path_generator(size,start,end,floors):
                     tile[0]-=choice[0]
                     tile[1]-=choice[1]
                     tile[2]-=choice[2]
-    print("\n------------end---------------\n")
     solution.close()
     return maze
 def maze_generator(size,floors):
@@ -238,9 +236,10 @@ def maze_generator(size,floors):
         end=np.array([0,size-1,size-1])
     maze=path_generator(size,start,end,floors)
     path=np.copy(maze)
+    # print(end)
     for i in range(ITERATIONS):
         zeros=np.where(maze==0)
-        poss_moves=[0,0,0,1,2,2,2,3,4,4,4,5,5,5]
+        poss_moves=[0,0,0,0,0,0,1,2,2,2,2,2,2,3,4,4,4,4,4,4,5,5,5,5,5,5]
         rand_zero=random.randint(0,zeros[0].size-1)
         tile=np.array([zeros[0][rand_zero],zeros[1][rand_zero],zeros[2][rand_zero]])
         if((tile[2]/(size-1)==0 or tile[2]/(size-1)==1) and (tile[1]/(size-1)==0 or tile[1]/(size-1)==1) and (tile[0]/(floors-1)==0 or tile[0]/(floors-1)==1)):
@@ -278,13 +277,4 @@ def maze_generator(size,floors):
                 tile-=moves[move]
                 poss_moves.remove(move)
     #finally setting the other corners to 1 so that only 1 end is point is left
-    endx,endy,endz=int(end[0]),int(end[1]),int(end[2])
-    complementary_endx,complementary_endy,complementary_endz=int(not(endx/(floors-1)))*(floors-1),int(not(endy/(size-1)))*(size-1),int(not(endz/(size-1)))*(size-1)
-    maze[endx,complementary_endy,endz]=1
-    maze[complementary_endx,complementary_endy,endz]=1
-    maze[complementary_endx,endy,endz]=1
-    maze[endx,complementary_endy,complementary_endz]=1
-    maze[complementary_endx,complementary_endy,complementary_endz]=1
-    maze[complementary_endx,endy,complementary_endz]=1
-    maze[endx,endy,complementary_endz]=1
-    return maze,path
+    return maze,path,end

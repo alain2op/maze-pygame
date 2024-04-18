@@ -36,3 +36,5 @@ def move(player,command):
         if command==4:
             player.floor+=1
         player.tile=np.copy(check_move)
+        # if command!=0:
+        #     print(player.tile)
