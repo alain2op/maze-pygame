@@ -39,7 +39,7 @@ def tile_checker(maze,tile):
         neighbors.append(maze[floor, col - 1,row])
     if floor > 0:
         neighbors.append(maze[floor - 1, col,row])
-    if floors < floors - 1:
+    if floor < floors - 1:
         neighbors.append(maze[floor + 1, col,row])
     if row < rows - 1:
         neighbors.append(maze[floor, col,row+1])
@@ -196,6 +196,7 @@ def path_generator(size,start,end,floors):
                 #loop ends if finally tile_checker is true
                 if(tile_checker(maze,tile)):
                     probs=probs_change(probs,inc,moves)
+                    print(probs)
                     solution.write(translator(choice))
                     solution.write("\n")
                     break
@@ -206,6 +207,7 @@ def path_generator(size,start,end,floors):
                     tile[0]-=choice[0]
                     tile[1]-=choice[1]
                     tile[2]-=choice[2]
+    print("\n------------end---------------\n")
     solution.close()
     return maze
 def maze_generator(size,floors):
@@ -238,23 +240,29 @@ def maze_generator(size,floors):
     path=np.copy(maze)
     for i in range(ITERATIONS):
         zeros=np.where(maze==0)
-        poss_moves=[0,1,2,3,4,5]
+        poss_moves=[0,0,0,1,2,2,2,3,4,4,4,5,5,5]
         rand_zero=random.randint(0,zeros[0].size-1)
         tile=np.array([zeros[0][rand_zero],zeros[1][rand_zero],zeros[2][rand_zero]])
-        if((tile[0]/(size-1)==0 or tile[0]/(size-1)==1) and (tile[1]/(size-1)==0 or tile[1]/(size-1)==1) and (tile[2]/(floors-1)==0 or tile[2]/(floors-1)==1)):
+        if((tile[2]/(size-1)==0 or tile[2]/(size-1)==1) and (tile[1]/(size-1)==0 or tile[1]/(size-1)==1) and (tile[0]/(floors-1)==0 or tile[0]/(floors-1)==1)):
             continue
         if(tile[0]/(floors-1)==0):
-            poss_moves.remove(3)
+            while 3 in poss_moves:
+                poss_moves.remove(3)
         if(tile[0]/(floors-1)==1):
-            poss_moves.remove(1)
+            while 1 in poss_moves:
+                poss_moves.remove(1)
         if(tile[1]/(size-1)==1):
-            poss_moves.remove(0)
+            while 0 in poss_moves:
+                poss_moves.remove(0)
         if(tile[1]/(size-1)==0):
-            poss_moves.remove(2)
+            while 2 in poss_moves:
+                poss_moves.remove(2)
         if(tile[2]/(size-1)==0):
-            poss_moves.remove(5)
+            while 5 in poss_moves:
+                poss_moves.remove(5)
         if (tile[2]/(size-1)==1):
-            poss_moves.remove(4)
+            while 4 in poss_moves:
+                poss_moves.remove(4)
         while(len(poss_moves)>0):
             move=random.choice(poss_moves)
             tile+=moves[move]
