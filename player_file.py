@@ -8,7 +8,7 @@ class player:
         self.orientation=3
         self.images=[]
         self.maze=maze
-        self.floor=int((self.maze.shape[2]-1)/2)
+        self.floor=int((self.maze.shape[0]-1)/2)
         image_names = ["top.jpeg", "left.jpeg", "bottom.jpeg", "right.jpeg"]
         folder_path = os.path.join(os.getcwd(), colour)
         for name in image_names:
@@ -35,8 +35,4 @@ def move(player,command):
             player.floor-=1
         if command==4:
             player.floor+=1
-        if command!=0:
-            print(player.tile)
         player.tile=np.copy(check_move)
-        if command!=0:
-            print(moves[command],player.tile)

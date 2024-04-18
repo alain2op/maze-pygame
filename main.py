@@ -3,7 +3,8 @@ import random
 import maze
 import numpy as np
 import player_file
-SIZE=5
+SIZE=7
+FLOORS=3
 TILE_SIZE=100
 MOVEMENT_DELAY = 250  # in milliseconds
 
@@ -11,8 +12,9 @@ MOVEMENT_DELAY = 250  # in milliseconds
 pygame.init()
 tile_size = TILE_SIZE
 size = SIZE
-centre = np.array([(size - 1)/2, (size - 1)/2,(size-1)/2])
-generated_maze, generated_path = maze.maze_generator(size)
+floors=FLOORS
+centre = np.array([(floors-1)/2,(size - 1)/2, (size - 1)/2])
+generated_maze, generated_path = maze.maze_generator(size,floors)
 window_width = generated_maze.shape[2] * tile_size
 window_height = generated_maze.shape[1] * tile_size
 window = pygame.display.set_mode((window_width, window_height))
@@ -77,13 +79,13 @@ while running:
 
     window.fill(WHITE)
     img=pygame.image.load("cloud.jpeg")
-    for y in range(generated_maze.shape[0]):
-        for x in range(generated_maze.shape[1]):
-            if generated_maze[player1.floor,y,x]==0 and player1.floor>0 and player1.floor<size-1 and generated_maze[player1.floor-1,y,x]==0 and generated_maze[player1.floor+1,y,x]==0 :
+    for y in range(generated_maze.shape[1]):
+        for x in range(generated_maze.shape[2]):
+            if generated_maze[player1.floor,y,x]==0 and player1.floor>0 and player1.floor<floors-1 and generated_maze[player1.floor-1,y,x]==0 and generated_maze[player1.floor+1,y,x]==0 :
                 img=pygame.image.load("up_down.jpg")
             elif generated_maze[player1.floor,y,x]==0 and player1.floor>0 and generated_maze[player1.floor-1,y,x]==0:
                 img=pygame.image.load("down.jpg")
-            elif generated_maze[player1.floor,y,x]==0 and player1.floor<size-1 and generated_maze[player1.floor+1,y,x]==0:
+            elif generated_maze[player1.floor,y,x]==0 and player1.floor<floors-1 and generated_maze[player1.floor+1,y,x]==0:
                 img=pygame.image.load("up.jpg")
             elif generated_maze[player1.floor,y,x]==0:
                 img=pygame.image.load("white.jpg")
