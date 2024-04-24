@@ -5,9 +5,9 @@ import random
 import math
 ITERATIONS=10000
 PROBABILITY=0.01
-
 #read this after reading path_generator function
 #this function checks if any loops are getting created when the path is being generated and returns a bool
+
 def translator(choice):
     moves=[np.array([0,1,0]),np.array([1,0,0]),np.array([0,-1,0]),np.array([-1,0,0]),np.array([0,0,1]),np.array([0,0,-1])]
     if np.array_equal(choice,moves[0]):
@@ -80,7 +80,10 @@ def probs_change(probs,inc,moves):
 def path_generator(size,start,end,floors):
     #initiliazes maze to all ones
     maze=np.ones((floors,size,size))
-    dirs=np.array([(end[0]-start[0])/abs(end[0]-start[0]),(end[1]-start[1])/abs(end[1]-start[1]),(end[2]-start[2])/abs(end[2]-start[2])])
+    if(end[0]-start[0]!=0):
+        dirs=np.array([(end[0]-start[0])/abs(end[0]-start[0]),(end[1]-start[1])/abs(end[1]-start[1]),(end[2]-start[2])/abs(end[2]-start[2])])
+    else:
+        dirs=np.array([0,(end[1]-start[1])/abs(end[1]-start[1]),(end[2]-start[2])/abs(end[2]-start[2])])
     moves=[np.array([0,1,0]),np.array([1,0,0]),np.array([0,-1,0]),np.array([-1,0,0]),np.array([0,0,1]),np.array([0,0,-1])]
     probs=[]
     inc=[]
@@ -133,13 +136,13 @@ def path_generator(size,start,end,floors):
                     solution=open("path.txt","w")
                     break
                 #begin{handles edge tile cases}
-                if(tile[0]/(floors-1)==0):
+                if(tile[0]==0):
                     move=np.array([-1,0,0])
                     index = next((i for i, arr in enumerate(possible_moves) if np.array_equal(arr, move)), -1)
                     if index!=-1:
                         possible_moves.pop(index)
                         possible_probs.pop(index)
-                if(tile[0]/(floors-1)==1):
+                if(tile[0]==floors-1):
                     move=np.array([1,0,0])
                     index = next((i for i, arr in enumerate(possible_moves) if np.array_equal(arr, move)), -1)
                     if index!=-1:
@@ -236,18 +239,18 @@ def maze_generator(size,floors):
         end=np.array([0,size-1,size-1])
     maze=path_generator(size,start,end,floors)
     path=np.copy(maze)
-    # print(end)
     for i in range(ITERATIONS):
         zeros=np.where(maze==0)
-        poss_moves=[0,0,0,0,0,0,1,2,2,2,2,2,2,3,4,4,4,4,4,4,5,5,5,5,5,5]
+        freq = 10
+        poss_moves = [1, 3] + [i for i in range(6) if (i!=1 and i!=3) for _ in range(freq)]
         rand_zero=random.randint(0,zeros[0].size-1)
         tile=np.array([zeros[0][rand_zero],zeros[1][rand_zero],zeros[2][rand_zero]])
-        if((tile[2]/(size-1)==0 or tile[2]/(size-1)==1) and (tile[1]/(size-1)==0 or tile[1]/(size-1)==1) and (tile[0]/(floors-1)==0 or tile[0]/(floors-1)==1)):
+        if((tile[2]/(size-1)==0 or tile[2]/(size-1)==1) and (tile[1]/(size-1)==0 or tile[1]/(size-1)==1) and (tile[0]==0 or tile[0]==floors-1)):
             continue
-        if(tile[0]/(floors-1)==0):
+        if(tile[0]==0):
             while 3 in poss_moves:
                 poss_moves.remove(3)
-        if(tile[0]/(floors-1)==1):
+        if(tile[0]==floors-1):
             while 1 in poss_moves:
                 poss_moves.remove(1)
         if(tile[1]/(size-1)==1):
@@ -263,7 +266,7 @@ def maze_generator(size,floors):
             while 4 in poss_moves:
                 poss_moves.remove(4)
         while(len(poss_moves)>0):
-            move=random.choice(poss_moves)
+            move=poss_moves[random.choice(list(range(len(poss_moves))))]
             tile+=moves[move]
             already=False
             if maze[int(tile[0]),int(tile[1]),int(tile[2])]==0:
