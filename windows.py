@@ -112,7 +112,7 @@ def start(window):
 def game(level,window):
     result=0
     if level==1:
-        size=5
+        size=15
         floors=1
     elif level==2:
         size=9
@@ -128,10 +128,48 @@ def game(level,window):
     pressed_keys = {}
     last_movement_time = pygame.time.get_ticks()
     game_running=True
+    tile_tracker=[]
+    teleport_times=[]
+    teleport_pushback_times=[]
+    for i in range(20):
+        teleport_times.append(random.randint(50000,70000))
+        teleport_pushback_times.append(random.randint(15000,25000))
+    teleport_index=0
+    last_tracker_time=pygame.time.get_ticks()
+    last_teleport_time=pygame.time.get_ticks()
 
+    white_blue_images=[]
+    white_images=[]
+    blue_images=[]
+    space_images=[]
+    for index in range(12):
+        white_blue_images.append(pygame.image.load("white_blue/white_blue_"+str(index+1)+".jpg"))
+        white_images.append(pygame.image.load("white/white_"+str(index+1)+".jpg"))
+        blue_images.append(pygame.image.load("blue/blue_"+str(index+1)+".jpg"))
+        space_images.append(pygame.image.load("space/space_"+str(index+1)+".jpg"))
+    tile_image=pygame.image.load("tile.jpg")
+
+    timer=420
+    energy=100000
+    i=0
+    spiral_frame_index=0
+    space_frame_index=0
     while game_running:
 
         current_time = pygame.time.get_ticks()
+        if current_time-last_tracker_time>=1000:
+            tile_tracker.append(player1.tile)
+            last_tracker_time=current_time
+            timer-=1
+        
+        if current_time-last_teleport_time>=teleport_times[teleport_index%20]:
+            for dim in range(3):
+                time_to_teleport=len(tile_tracker)-1-teleport_pushback_times[teleport_index%20]//1000
+                player1.tile[dim]=tile_tracker[time_to_teleport][dim]
+                last_teleport_time=current_time
+            player1.floor=int(player1.tile[0])
+            teleport_index+=1
+        
         time_since_last_movement = current_time - last_movement_time
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -174,30 +212,33 @@ def game(level,window):
         elif pygame.K_d in pressed_keys:
             orientation = 4
         player_file.rotate(player1, orientation)
-
         window.fill((0,200,200))
         for y in range(generated_maze.shape[1]):
             for x in range(generated_maze.shape[2]):
                 if generated_maze[player1.floor,y,x]==0 and player1.floor>0 and player1.floor<floors-1 and generated_maze[player1.floor-1,y,x]==0 and generated_maze[player1.floor+1,y,x]==0 :
-                    img=pygame.image.load("up_down.jpg")
+                    img=white_blue_images[spiral_frame_index]
                 elif generated_maze[player1.floor,y,x]==0 and player1.floor>0 and generated_maze[player1.floor-1,y,x]==0:
-                    img=pygame.image.load("down.jpg")
+                    img=white_images[spiral_frame_index]
                 elif generated_maze[player1.floor,y,x]==0 and player1.floor<floors-1 and generated_maze[player1.floor+1,y,x]==0:
-                    img=pygame.image.load("up.jpg")
+                    img=blue_images[spiral_frame_index]
                 elif generated_maze[player1.floor,y,x]==0:
-                    img=pygame.image.load("white.jpg")
+                    img=tile_image
                 elif generated_maze[player1.floor,y,x]==1:
-                    img=pygame.image.load("black.jpg")
+                    img=space_images[space_frame_index%12]
                 window.blit(pygame.transform.scale(img, (tile_size, tile_size)), (x * tile_size, y * tile_size))
         if (player1.floor==end_point[0]):
             trophy=pygame.image.load("trophy.jpeg")
             window.blit(pygame.transform.scale(trophy, (tile_size, tile_size)), (end_point[2] * tile_size, end_point[1]* tile_size))
+        spiral_frame_index=(spiral_frame_index+1)%12
+        if(i%7==0):
+            space_frame_index+=1
         z,y,x = player1.tile[0], player1.tile[1],player1.tile[2]
         image = player1.images[player1.orientation - 1]
         RED = (255, 0, 0)
         pygame.draw.circle(window, RED + (128,), ((x+0.5)*tile_size,(y+0.5)*tile_size), tile_size*2//10)
         pygame.display.flip()
         pygame.time.Clock().tick(60)
+        i+=1
     pygame.quit()
     sys.exit()
 

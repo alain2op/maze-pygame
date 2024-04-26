@@ -241,7 +241,7 @@ def maze_generator(size,floors):
     path=np.copy(maze)
     for i in range(ITERATIONS):
         zeros=np.where(maze==0)
-        freq = 10
+        freq = 30
         poss_moves = [1, 3] + [i for i in range(6) if (i!=1 and i!=3) for _ in range(freq)]
         rand_zero=random.randint(0,zeros[0].size-1)
         tile=np.array([zeros[0][rand_zero],zeros[1][rand_zero],zeros[2][rand_zero]])
