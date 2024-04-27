@@ -239,6 +239,7 @@ def maze_generator(size,floors):
         end=np.array([0,size-1,size-1])
     maze=path_generator(size,start,end,floors)
     path=np.copy(maze)
+    #creates the rest of maze 
     for i in range(ITERATIONS):
         zeros=np.where(maze==0)
         freq = 30
