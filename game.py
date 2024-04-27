@@ -21,7 +21,8 @@ while running:
         window,level=windows.start(window)
         input=2
     if input==2:
-        level,window,result=windows.game(level,window)
+        level,window,result,input=windows.game(level,window)
+    if input==4:
         window,input=windows.end(window,level,result)
     if input==3:
         running=False
