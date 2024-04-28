@@ -20,7 +20,7 @@ BLACK = (0, 0, 0)
 GREEN=(200,255,200)
 BLUE=(0,0,255)
 TIMER=300
-ENERGY=400
+ENERGY=600
 LIGHTNING_BLUE=(0,191,255)
 VISION_TILE_COUNT=3
 #a function to remove part(rectangle) of an image and blit the remaining part of the image
@@ -31,8 +31,24 @@ def remove_and_blit(image, top_left, bottom_right):
     pygame.draw.rect(result_surface, (0, 0, 0, 0), remove_rect)
     return result_surface
 
+def update_highscores(score,level):
+    file_name="highscores_"+str(level)+".txt"
+    # Reading existing high scores
+    with open(file_name) as file:
+        high_scores = [int(line.strip()) for line in file.readlines()]
+    # Adding the new score
+    high_scores.append(score)   
+    # Sorting the scores in descending order
+    high_scores.sort(reverse=True)   
+    # Taking top 5 scores
+    top_scores = high_scores[:5]
+    # Writing updated high scores to file
+    with open(file_name, 'w') as file:
+        for s in top_scores:
+            file.write(str(s) + '\n')
+
 # a buttn class that detects clicks and hovering and makes necessart changes
-class button:
+class Button:
     def __init__(self, text, font, text_color, border_color, position):
         self.text = text
         self.font = font
@@ -82,10 +98,10 @@ def start(window):
     title_font = pygame.font.Font("HARRYP__.TTF", 180)
     button_font = pygame.font.Font("HARRYP__.TTF", 80)
     exit_font=pygame.font.Font("HARRYP__.TTF", 120)
-    labyrinth = button("labyrinth", button_font, GOLD, BLACK, (100, 600))
-    wormhole = button("wormhole", button_font, GOLD, BLACK, (500, 600))
-    singularity = button("singularity", button_font, GOLD, BLACK, (900, 600))
-    exit_button=button("Exit",exit_font,GOLD,BLACK,(530,720))
+    labyrinth = Button("labyrinth", button_font, GOLD, BLACK, (100, 600))
+    wormhole = Button("wormhole", button_font, GOLD, BLACK, (500, 600))
+    singularity = Button("singularity", button_font, GOLD, BLACK, (900, 600))
+    exit_button=Button("Exit",exit_font,GOLD,BLACK,(530,720))
     title = "Lost in Space-Time"
     title_positions = [(300, 200), (550, 200), (800, 400)]#position of each word of the title for the animation done
 
@@ -183,16 +199,24 @@ def game(level,window):
     face_left=walk_left.frames[0]
     faces=[face_up,face_left,face_down,face_right]
 
+    time_portal_open=[]
+    time_portal_close=[]
+    for index in range(7):
+        open_filename="portal_green/tile0"+str(index+8)+".png"
+        close_filename="portal_green/tile0"+str(index+15)+".png"
+        time_portal_open.append(pygame.transform.scale(pygame.image.load(open_filename),(tile_size,tile_size)))
+        time_portal_close.append(pygame.transform.scale(pygame.image.load(close_filename),(tile_size,tile_size)))
     #a set of variables created to handle time slipping(teleported to an instance in the past)    
     tile_tracker=[]#tracks the positions at each second
     teleport_times=[]#stores the timestamps when to teleport
     teleport_pushback_times=[]#stores how long back to teleport
     for i in range(20):
-        teleport_times.append(random.randint(30000,50000))#teleports a random time between 30-50s
+        teleport_times.append(random.randint(50000,60000))#teleports a random time between 50-60s
         teleport_pushback_times.append(random.randint(15000,25000))# teleports back 15-25s
     teleport_index=0#to go through the arrays
     last_tracker_time=pygame.time.get_ticks()#to track tiles every second
     last_teleport_time=pygame.time.get_ticks()#to track teleportation
+    teleporting=False
 
 #storing frames and images of the background and tile animations and other required images
     white_blue_images=[]
@@ -218,17 +242,17 @@ def game(level,window):
     game_font_4=pygame.font.Font("HARRYP__.TTF",100)  
 
 #storing and drawing the 3 buttons
-    home=button("Home",game_font_4,GOLD,BLACK,(1050,720))
-    exit=button("Exit",game_font_4,GOLD,BLACK,(1050,840))
-    restart=button("Restart",game_font_4,GOLD,BLACK,(1050,600))
+    home=Button("Home",game_font_4,GOLD,BLACK,(1050,720))
+    exit=Button("Exit",game_font_4,GOLD,BLACK,(1050,840))
+    restart=Button("Restart",game_font_4,GOLD,BLACK,(1050,600))
     restart.draw(window)
     home.draw(window)
     exit.draw(window)
 
 #storing and drawing the labels of the 3 parameters that change as the game progresses
-    floor_text = button("Spatial Zone : ", game_font_1, GOLD, BLACK, (970, 80))
-    timer_text_1=button("Temporal Breakdown Timer :",game_font_3,GOLD,BLACK,(955,180))
-    energy_text=button("Chrono-Morphic Energy : ",game_font_3,GOLD,BLACK,(975,350))   
+    floor_text = Button("Spatial Zone : ", game_font_1, GOLD, BLACK, (970, 80))
+    timer_text_1=Button("Temporal Breakdown Timer :",game_font_3,GOLD,BLACK,(955,180))
+    energy_text=Button("Chrono-Morphic Energy : ",game_font_3,GOLD,BLACK,(975,350))   
     timer_text_1.draw(window)
     floor_text.draw(window)
     energy_text.draw(window)
@@ -256,27 +280,72 @@ def game(level,window):
         #player wins if he reached the endpoint
         if player1.tile[0]==end_point[0] and player1.tile[1]==end_point[1] and player1.tile[2]==end_point[2]:
             time.sleep(1)
-            return 3,window,1,level #1 is for winning and 0 if lost
+            score=timer+(300*player1.energy//ENERGY)+500
+            return 3,window,[1,score],level #1 is for winning and 0 if lost
         
         #player loses if timer or energy becomes 0
         if (timer<=0) or (player1.energy<=0):
-            return 3,window,0,level
+            score=timer+300*player1.energy//ENERGY
+            return 3,window,[0,score],level
 
         #tile tracking for time slipping
         if current_time-last_tracker_time>=1000:
+            timer-=(current_time-last_tracker_time)//1000
             tile_tracker.append(player1.tile)
             last_tracker_time=current_time
-            timer-=1
         
         #logic for time_slipping
         if current_time-last_teleport_time>=teleport_times[teleport_index%20]:
+            teleporting=True
+            for i in range(7):
+                window.blit(proxy_window,(0,0),(tile_size,tile_size,(2*vision_tile_count+1)*tile_size,(2*vision_tile_count+1)*tile_size))
+                window.blit(faces[player1.orientation],((vision_tile_count)*tile_size,(vision_tile_count)*tile_size))
+                window.blit(space_images_background[space_frame_index],(945,0),(0,0,355,945))
+                window.blit(time_portal_open[i], ((vision_tile_count - 1) * tile_size, vision_tile_count * tile_size))
+                #updating timer,energy and floors
+                floor_number_text=Button(str(player1.floor),game_font_2,LIGHTNING_BLUE,BLACK,(1240,70))
+                timer_text=Button(str(timer),game_font_2,LIGHTNING_BLUE,BLACK,(1080,240))
+                energy_level=remove_and_blit(energy_image,(6+188*player1.energy//ENERGY,6),(194,24))
+                #drawing other buttons and text
+                timer_text_1.draw(window)
+                floor_text.draw(window)
+                home.draw(window)
+                exit.draw(window)
+                restart.draw(window)
+                timer_text.draw(window)
+                floor_number_text.draw(window)
+                energy_text.draw(window)  
+                window.blit(energy_level,(1050,420))
+                pygame.display.flip()
+                time.sleep(0.1)
+            for i in range(7):
+                window.blit(proxy_window,(0,0),(tile_size,tile_size,(2*vision_tile_count+1)*tile_size,(2*vision_tile_count+1)*tile_size))
+                window.blit(space_images_background[space_frame_index],(945,0),(0,0,355,945))
+                window.blit(time_portal_close[i], ((vision_tile_count - 1) * tile_size, vision_tile_count * tile_size))
+                #updating timer,energy and floors
+                floor_number_text=Button(str(player1.floor),game_font_2,LIGHTNING_BLUE,BLACK,(1240,70))
+                timer_text=Button(str(timer),game_font_2,LIGHTNING_BLUE,BLACK,(1080,240))
+                energy_level=remove_and_blit(energy_image,(6+188*player1.energy//ENERGY,6),(194,24))
+                #drawing other buttons and text
+                timer_text_1.draw(window)
+                floor_text.draw(window)
+                home.draw(window)
+                exit.draw(window)
+                restart.draw(window)
+                timer_text.draw(window)
+                floor_number_text.draw(window)
+                energy_text.draw(window)  
+                window.blit(energy_level,(1050,420))
+                pygame.display.flip()
+                time.sleep(0.1)
+            
             for dim in range(3):
                 time_to_teleport=len(tile_tracker)-1-teleport_pushback_times[teleport_index%20]//1000
                 player1.tile[dim]=tile_tracker[time_to_teleport][dim]
                 last_teleport_time=current_time
             player1.floor=int(player1.tile[0])
             teleport_index=(teleport_index+1)%20
-        
+    
         
         time_since_last_movement = current_time - last_movement_time
         for event in pygame.event.get():
@@ -349,8 +418,8 @@ def game(level,window):
         if moved and not(player1.tile[0]==previous_tile[0] and player1.tile[1]==previous_tile[1] and player1.tile[2]==previous_tile[2]):
             for j in range(9):
                 #updating timer,energy and floors
-                floor_number_text=button(str(player1.floor),game_font_2,LIGHTNING_BLUE,BLACK,(1240,70))
-                timer_text=button(str(timer),game_font_2,LIGHTNING_BLUE,BLACK,(1080,240))
+                floor_number_text=Button(str(player1.floor),game_font_2,LIGHTNING_BLUE,BLACK,(1240,70))
+                timer_text=Button(str(timer),game_font_2,LIGHTNING_BLUE,BLACK,(1080,240))
                 energy_level=remove_and_blit(energy_image,(6+188*player1.energy//ENERGY,6),(194,24))
                 #drawing other buttons and text
                 timer_text_1.draw(window)
@@ -390,6 +459,51 @@ def game(level,window):
                         img=trophy
                         proxy_window.blit(img, ((x+vision_tile_count+1) * tile_size, (y+vision_tile_count+1) * tile_size))
 
+        if teleporting:
+
+            for i in range(7):
+                window.blit(proxy_window,(0,0),(tile_size,tile_size,(2*vision_tile_count+1)*tile_size,(2*vision_tile_count+1)*tile_size))
+                window.blit(space_images_background[space_frame_index],(945,0),(0,0,355,945))
+                window.blit(time_portal_open[i], ((vision_tile_count - 1) * tile_size, vision_tile_count * tile_size))
+                #updating timer,energy and floors
+                floor_number_text=Button(str(player1.floor),game_font_2,LIGHTNING_BLUE,BLACK,(1240,70))
+                timer_text=Button(str(timer),game_font_2,LIGHTNING_BLUE,BLACK,(1080,240))
+                energy_level=remove_and_blit(energy_image,(6+188*player1.energy//ENERGY,6),(194,24))
+                #drawing other buttons and text
+                timer_text_1.draw(window)
+                floor_text.draw(window)
+                home.draw(window)
+                exit.draw(window)
+                restart.draw(window)
+                timer_text.draw(window)
+                floor_number_text.draw(window)
+                energy_text.draw(window)  
+                window.blit(energy_level,(1050,420))
+                pygame.display.flip()
+                time.sleep(0.1)
+            for i in range(7):
+                window.blit(proxy_window,(0,0),(tile_size,tile_size,(2*vision_tile_count+1)*tile_size,(2*vision_tile_count+1)*tile_size))
+                window.blit(faces[player1.orientation],((vision_tile_count)*tile_size,(vision_tile_count)*tile_size))
+                window.blit(space_images_background[space_frame_index],(945,0),(0,0,355,945))
+                window.blit(time_portal_close[i], ((vision_tile_count - 1) * tile_size, vision_tile_count * tile_size))
+                #updating timer,energy and floors
+                floor_number_text=Button(str(player1.floor),game_font_2,LIGHTNING_BLUE,BLACK,(1240,70))
+                timer_text=Button(str(timer),game_font_2,LIGHTNING_BLUE,BLACK,(1080,240))
+                energy_level=remove_and_blit(energy_image,(6+188*player1.energy//ENERGY,6),(194,24))
+                #drawing other buttons and text
+                timer_text_1.draw(window)
+                floor_text.draw(window)
+                home.draw(window)
+                exit.draw(window)
+                restart.draw(window)
+                timer_text.draw(window)
+                floor_number_text.draw(window)
+                energy_text.draw(window)  
+                window.blit(energy_level,(1050,420))
+                pygame.display.flip()
+                time.sleep(0.1)
+            teleporting=False
+    
         #drawing the game window from proxy window and orientation and other parameters over it
         window.blit(proxy_window,(0,0),(tile_size,tile_size,(2*vision_tile_count+1)*tile_size,(2*vision_tile_count+1)*tile_size))
         window.blit(faces[player1.orientation],((vision_tile_count)*tile_size,(vision_tile_count)*tile_size))
@@ -408,8 +522,8 @@ def game(level,window):
         energy_level=remove_and_blit(energy_image,(6+188*player1.energy//ENERGY,6),(194,24))
         window.blit(energy_level,(1050,420))
         restart.draw(window)
-        floor_number_text=button(str(player1.floor),game_font_2,LIGHTNING_BLUE,BLACK,(1240,70))
-        timer_text=button(str(timer),game_font_2,LIGHTNING_BLUE,BLACK,(1080,240))
+        floor_number_text=Button(str(player1.floor),game_font_2,LIGHTNING_BLUE,BLACK,(1240,70))
+        timer_text=Button(str(timer),game_font_2,LIGHTNING_BLUE,BLACK,(1080,240))
         timer_text.draw(window)
         floor_number_text.draw(window)
         pygame.display.flip()
@@ -421,12 +535,13 @@ def game(level,window):
 
 def end(window,level,result):
     #handling cases for winning and losing and doing similarly as the start window
-    if result==1:
+
+    if result[0]==1:
         end_image = pygame.transform.scale(pygame.image.load("end_won.jpeg"), (WIDTH, HEIGHT))
-        title_font = pygame.font.Font("HARRYP__.TTF", 180)
+        title_font = pygame.font.Font("HARRYP__.TTF", 140)
         button_font = pygame.font.Font("HARRYP__.TTF", 80)
         title = "You are free"
-        title_positions = [(350, 200), (600, 200), (850, 200)]
+        title_positions = [(350, 250), (600, 250), (850, 250)]
         window.blit(end_image, (0, 0))
         words = title.split()
         pygame.display.flip()
@@ -440,7 +555,8 @@ def end(window,level,result):
             pygame.display.flip()
             time.sleep(0.5)
         pygame.display.flip()
-    elif result==0:
+
+    elif result[0]==0:
         end_image = pygame.transform.scale(pygame.image.load("end_lost.jpeg"), (WIDTH, HEIGHT))
         title_font = pygame.font.Font("HARRYP__.TTF", 140)
         button_font = pygame.font.Font("HARRYP__.TTF", 80)
@@ -460,15 +576,23 @@ def end(window,level,result):
             time.sleep(0.5)
         pygame.display.flip()
 
-    home = button("Home", button_font, GOLD, BLACK, (150, 800))
-    play_again = button("Play Again", button_font, GOLD, BLACK, (500, 800))
-    exit = button("Exit", button_font, GOLD, BLACK, (950, 800))
+    #updating highscores
+    current_score = result[1]  
+    update_highscores(current_score,level)
+
+    home = Button("Home", button_font, GOLD, BLACK, (150, 800))
+    play_again = Button("Play Again", button_font, GOLD, BLACK, (500, 800))
+    exit = Button("Exit", button_font, GOLD, BLACK, (950, 800))
+    score_text=Button("Score : ",title_font,GOLD,BLACK,(350,500))
+    score=Button(str(result[1]),title_font,LIGHTNING_BLUE,BLACK,(700,500))
     buttons=[home,play_again,exit]
     start_running = True
     while start_running:
         
         for button in buttons:
             button.draw(window)
+        score_text.draw(window)
+        score.draw(window)
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -479,17 +603,17 @@ def end(window,level,result):
                     if button.is_hovered(mouse_pos):
                         button.set_hovered(True)
                     else:
-                        button.set_hoved(False)
+                        button.set_hovered(False)
                     
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1:  # Left mouse button
                     mouse_pos = pygame.mouse.get_pos()
                     if home.is_hovered(mouse_pos):
-                        return WINDOW,1
+                        return 1,window
                     elif play_again.is_hovered(mouse_pos):
-                        return WINDOW,2
+                        return 2,window
                     elif exit.is_hovered(mouse_pos):
-                        return WINDOW,3
+                        return 0,window
                     
         pygame.display.flip()
     pygame.quit()
