@@ -182,6 +182,45 @@ def game(level,window):
     #maze is generated
     centre = np.array([(floors-1)/2,(size - 1)/2, (size - 1)/2])
     generated_maze, generated_path,end_point = maze.maze_generator(size,floors)
+    #logic for generating time potions
+    potion_tiles=[]
+    if level==1:
+        zeros=np.where(generated_maze==0)
+        number_of_zeros=len(zeros[0])
+        index=random.randint(0,number_of_zeros-1)
+        potion_tile=np.array([zeros[0][index],zeros[1][index],zeros[2][index]])
+        potion_tiles.append(potion_tile)
+        for i in range(2):
+            found=False
+            while not found:
+                found=True
+                index=random.randint(0,number_of_zeros-1)
+                potion_tile=np.array([zeros[0][index],zeros[1][index],zeros[2][index]])
+                for potion_tile_1 in potion_tiles:
+                    if (abs(potion_tile[1]-potion_tile_1[1])+abs(potion_tile[2]-potion_tile_1[2])<25):
+                        found=False
+                if found:
+                    potion_tiles.append(potion_tile)
+    if level==2:
+        zeros=np.where(generated_maze==0)
+        number_of_zeros=len(zeros[0])
+        for i in range(3):
+            found = False
+            while not found:
+                index=random.randint(0,number_of_zeros-1)
+                if zeros[0][index]==i:
+                    found=True
+                    potion_tiles.append(np.array([zeros[0][index],zeros[1][index],zeros[2][index]]))
+    if level==3:
+        zeros=np.where(generated_maze==0)
+        number_of_zeros=len(zeros[0])
+        for i in range(0,5,2):
+            found = False
+            while not found:
+                index=random.randint(0,number_of_zeros-1)
+                if zeros[0][index]==i:
+                    found=True
+                    potion_tiles.append(np.array([zeros[0][index],zeros[1][index],zeros[2][index]]))
 
     #creating the instance of the character
     player1 = player_file.player( centre, generated_maze,ENERGY)
@@ -201,11 +240,17 @@ def game(level,window):
 
     time_portal_open=[]
     time_portal_close=[]
+    space_portal_open=[]
+    space_portal_close=[]
     for index in range(7):
-        open_filename="portal_green/tile0"+str(index+8)+".png"
-        close_filename="portal_green/tile0"+str(index+15)+".png"
-        time_portal_open.append(pygame.transform.scale(pygame.image.load(open_filename),(tile_size,tile_size)))
-        time_portal_close.append(pygame.transform.scale(pygame.image.load(close_filename),(tile_size,tile_size)))
+        open_time_filename="portal_green/tile0"+str(index+8)+".png"
+        close_time_filename="portal_green/tile0"+str(index+15)+".png"
+        time_portal_open.append(pygame.transform.scale(pygame.image.load(open_time_filename),(tile_size,tile_size)))
+        time_portal_close.append(pygame.transform.scale(pygame.image.load(close_time_filename),(tile_size,tile_size)))
+        open_space_filename="portal_purple/tile0"+str(index+8)+".png"
+        close_space_filename="portal_purple/tile0"+str(index+15)+".png"
+        space_portal_open.append(pygame.transform.scale(pygame.image.load(open_space_filename),(tile_size,tile_size)))
+        space_portal_close.append(pygame.transform.scale(pygame.image.load(close_space_filename),(tile_size,tile_size)))
     #a set of variables created to handle time slipping(teleported to an instance in the past)    
     tile_tracker=[]#tracks the positions at each second
     teleport_times=[]#stores the timestamps when to teleport
@@ -217,6 +262,7 @@ def game(level,window):
     last_tracker_time=pygame.time.get_ticks()#to track tiles every second
     last_teleport_time=pygame.time.get_ticks()#to track teleportation
     teleporting=False
+    teleporting1=False
 
 #storing frames and images of the background and tile animations and other required images
     white_blue_images=[]
@@ -230,10 +276,13 @@ def game(level,window):
     for index in range(40):
         space_images_background.append(pygame.transform.scale(pygame.image.load("space/space_"+str(index)+".gif"),(WIDTH+tile_size*2,HEIGHT+tile_size*2)))
     tile_image=pygame.transform.scale(pygame.image.load("tile.jpg"),(tile_size,tile_size))
-    trophy=pygame.transform.scale(pygame.image.load("trophy.jpeg"),(tile_size,tile_size))
+    wormhole=pygame.transform.scale(pygame.image.load("wormhole.png"),(tile_size,tile_size))
     energy_image=pygame.transform.scale(pygame.image.load("energy.png"),(200,30))
-
-    
+    potion_image=pygame.transform.scale(pygame.image.load("potion.png"),(tile_size//2,tile_size//2))
+    checkpoint_images=[]
+    for index in range(5):
+        file_name="checkpoint/tile00"+str(index)+".png"
+        checkpoint_images.append(pygame.transform.scale(pygame.image.load(file_name),(tile_size//2,tile_size//2)))
 
 #storing required font sizes
     game_font_1 = pygame.font.Font("HARRYP__.TTF", 60)
@@ -271,7 +320,7 @@ def game(level,window):
     spiral_frame_index=0
     space_frame_index=0
     space_frame_time_stamp=pygame.time.get_ticks()
-
+    last_use_teleport=last_set_teleport=pygame.time.get_ticks()
 #main loop
     while game_running:
         previous_tile=player1.tile
@@ -281,12 +330,23 @@ def game(level,window):
         if player1.tile[0]==end_point[0] and player1.tile[1]==end_point[1] and player1.tile[2]==end_point[2]:
             time.sleep(1)
             score=timer+(300*player1.energy//ENERGY)+500
-            return 3,window,[1,score],level #1 is for winning and 0 if lost
+            return 3,window,[1,int(score)],level #1 is for winning and 0 if lost
         
         #player loses if timer or energy becomes 0
         if (timer<=0) or (player1.energy<=0):
             score=timer+300*player1.energy//ENERGY
-            return 3,window,[0,score],level
+            return 3,window,[0,int(score)],level
+        
+        #consumption of potion
+        potion_found=False
+        potion_index=100
+        for j in range(len(potion_tiles)):
+            if potion_tiles[j][0] == player1.tile[0] and potion_tiles[j][1] == player1.tile[1] and potion_tiles[j][2] == player1.tile[2]:
+                potion_found=True
+                potion_index=j
+                player1.energy += ENERGY / 10
+        if potion_found:
+            potion_tiles.pop(potion_index)
 
         #tile tracking for time slipping
         if current_time-last_tracker_time>=1000:
@@ -297,11 +357,11 @@ def game(level,window):
         #logic for time_slipping
         if current_time-last_teleport_time>=teleport_times[teleport_index%20]:
             teleporting=True
-            for i in range(7):
+            for j in range(7):
                 window.blit(proxy_window,(0,0),(tile_size,tile_size,(2*vision_tile_count+1)*tile_size,(2*vision_tile_count+1)*tile_size))
                 window.blit(faces[player1.orientation],((vision_tile_count)*tile_size,(vision_tile_count)*tile_size))
                 window.blit(space_images_background[space_frame_index],(945,0),(0,0,355,945))
-                window.blit(time_portal_open[i], ((vision_tile_count - 1) * tile_size, vision_tile_count * tile_size))
+                window.blit(time_portal_open[j], ((vision_tile_count - 1) * tile_size, vision_tile_count * tile_size))
                 #updating timer,energy and floors
                 floor_number_text=Button(str(player1.floor),game_font_2,LIGHTNING_BLUE,BLACK,(1240,70))
                 timer_text=Button(str(timer),game_font_2,LIGHTNING_BLUE,BLACK,(1080,240))
@@ -318,10 +378,10 @@ def game(level,window):
                 window.blit(energy_level,(1050,420))
                 pygame.display.flip()
                 time.sleep(0.1)
-            for i in range(7):
+            for j in range(7):
                 window.blit(proxy_window,(0,0),(tile_size,tile_size,(2*vision_tile_count+1)*tile_size,(2*vision_tile_count+1)*tile_size))
                 window.blit(space_images_background[space_frame_index],(945,0),(0,0,355,945))
-                window.blit(time_portal_close[i], ((vision_tile_count - 1) * tile_size, vision_tile_count * tile_size))
+                window.blit(time_portal_close[j], ((vision_tile_count - 1) * tile_size, vision_tile_count * tile_size))
                 #updating timer,energy and floors
                 floor_number_text=Button(str(player1.floor),game_font_2,LIGHTNING_BLUE,BLACK,(1240,70))
                 timer_text=Button(str(timer),game_font_2,LIGHTNING_BLUE,BLACK,(1080,240))
@@ -408,6 +468,77 @@ def game(level,window):
                 movement_direction=4
             elif pygame.K_LCTRL in pressed_keys:#for moving down
                 movement_direction=2
+            elif pygame.K_z in pressed_keys and pygame.time.get_ticks()-last_set_teleport>5000:
+                player1.checkpoint=player1.tile
+                player1.energy-=ENERGY/20
+                last_set_teleport=pygame.time.get_ticks()
+                for j in range(5):
+                    window.blit(proxy_window,(0,0),(tile_size,tile_size,(2*vision_tile_count+1)*tile_size,(2*vision_tile_count+1)*tile_size))
+                    window.blit(space_images_background[space_frame_index],(945,0),(0,0,355,945))
+                    window.blit(checkpoint_images[j], ((vision_tile_count+1/4) * tile_size, (vision_tile_count+1/4) * tile_size))
+                    #updating timer,energy and floors
+                    floor_number_text=Button(str(player1.floor),game_font_2,LIGHTNING_BLUE,BLACK,(1240,70))
+                    timer_text=Button(str(timer),game_font_2,LIGHTNING_BLUE,BLACK,(1080,240))
+                    energy_level=remove_and_blit(energy_image,(6+188*player1.energy//ENERGY,6),(194,24))
+                    #drawing other buttons and text
+                    timer_text_1.draw(window)
+                    floor_text.draw(window)
+                    home.draw(window)
+                    exit.draw(window)
+                    restart.draw(window)
+                    timer_text.draw(window)
+                    floor_number_text.draw(window)
+                    energy_text.draw(window)  
+                    window.blit(energy_level,(1050,420))
+                    pygame.display.flip()
+                    time.sleep(0.1)
+            elif pygame.K_x in pressed_keys and pygame.time.get_ticks()-last_use_teleport>5000:
+                player1.energy-=ENERGY/20
+                last_use_teleport=pygame.time.get_ticks()
+                teleporting1=True
+                for j in range(7):
+                    window.blit(proxy_window,(0,0),(tile_size,tile_size,(2*vision_tile_count+1)*tile_size,(2*vision_tile_count+1)*tile_size))
+                    window.blit(faces[player1.orientation],((vision_tile_count)*tile_size,(vision_tile_count)*tile_size))
+                    window.blit(space_images_background[space_frame_index],(945,0),(0,0,355,945))
+                    window.blit(space_portal_open[j], ((vision_tile_count - 1) * tile_size, vision_tile_count * tile_size))
+                    #updating timer,energy and floors
+                    floor_number_text=Button(str(player1.floor),game_font_2,LIGHTNING_BLUE,BLACK,(1240,70))
+                    timer_text=Button(str(timer),game_font_2,LIGHTNING_BLUE,BLACK,(1080,240))
+                    energy_level=remove_and_blit(energy_image,(6+188*player1.energy//ENERGY,6),(194,24))
+                    #drawing other buttons and text
+                    timer_text_1.draw(window)
+                    floor_text.draw(window)
+                    home.draw(window)
+                    exit.draw(window)
+                    restart.draw(window)
+                    timer_text.draw(window)
+                    floor_number_text.draw(window)
+                    energy_text.draw(window)  
+                    window.blit(energy_level,(1050,420))
+                    pygame.display.flip()
+                    time.sleep(0.1)
+                for j in range(7):
+                    window.blit(proxy_window,(0,0),(tile_size,tile_size,(2*vision_tile_count+1)*tile_size,(2*vision_tile_count+1)*tile_size))
+                    window.blit(space_images_background[space_frame_index],(945,0),(0,0,355,945))
+                    window.blit(space_portal_close[j], ((vision_tile_count - 1) * tile_size, vision_tile_count * tile_size))
+                    #updating timer,energy and floors
+                    floor_number_text=Button(str(player1.floor),game_font_2,LIGHTNING_BLUE,BLACK,(1240,70))
+                    timer_text=Button(str(timer),game_font_2,LIGHTNING_BLUE,BLACK,(1080,240))
+                    energy_level=remove_and_blit(energy_image,(6+188*player1.energy//ENERGY,6),(194,24))
+                    #drawing other buttons and text
+                    timer_text_1.draw(window)
+                    floor_text.draw(window)
+                    home.draw(window)
+                    exit.draw(window)
+                    restart.draw(window)
+                    timer_text.draw(window)
+                    floor_number_text.draw(window)
+                    energy_text.draw(window)  
+                    window.blit(energy_level,(1050,420))
+                    pygame.display.flip()
+                    time.sleep(0.1)
+                player1.tile=player1.checkpoint
+                player1.floor=int(player1.tile[0])
             if walk_code in range(1,5):
                 moved=True
                 time.sleep(0.04)
@@ -455,16 +586,23 @@ def game(level,window):
                     elif generated_maze[player1.floor,int(player1.tile[1]+y),int(player1.tile[2]+x)]==0:
                         img=tile_image
                         proxy_window.blit(img, ((x+vision_tile_count+1) * tile_size, (y+vision_tile_count+1) * tile_size))
+                    if player1.floor==player1.checkpoint[0] and x+player1.tile[2]==player1.checkpoint[2] and y+player1.tile[1]==player1.checkpoint[1]:
+                        img=checkpoint_images[4]
+                        proxy_window.blit(img, ((x+vision_tile_count+1+1/4) * tile_size, (y+vision_tile_count+1+1/4) * tile_size))
+                    for j in range(len(potion_tiles)):
+                        if player1.floor==potion_tiles[j][0] and x+player1.tile[2]==potion_tiles[j][2] and y+player1.tile[1]==potion_tiles[j][1]:
+                            img=potion_image
+                            proxy_window.blit(img, ((x+vision_tile_count+1+1/4) * tile_size, (y+vision_tile_count+1+1/4) * tile_size))
                     if player1.floor==end_point[0] and x+player1.tile[2]==end_point[2] and y+player1.tile[1]==end_point[1]:
-                        img=trophy
-                        proxy_window.blit(img, ((x+vision_tile_count+1) * tile_size, (y+vision_tile_count+1) * tile_size))
+                        img=wormhole
+                        proxy_window.blit(img, ((x+vision_tile_count+1) * tile_size, (y+vision_tile_count+1) * tile_size))                    
 
         if teleporting:
 
-            for i in range(7):
+            for j in range(7):
                 window.blit(proxy_window,(0,0),(tile_size,tile_size,(2*vision_tile_count+1)*tile_size,(2*vision_tile_count+1)*tile_size))
                 window.blit(space_images_background[space_frame_index],(945,0),(0,0,355,945))
-                window.blit(time_portal_open[i], ((vision_tile_count - 1) * tile_size, vision_tile_count * tile_size))
+                window.blit(time_portal_open[j], ((vision_tile_count - 1) * tile_size, vision_tile_count * tile_size))
                 #updating timer,energy and floors
                 floor_number_text=Button(str(player1.floor),game_font_2,LIGHTNING_BLUE,BLACK,(1240,70))
                 timer_text=Button(str(timer),game_font_2,LIGHTNING_BLUE,BLACK,(1080,240))
@@ -481,11 +619,11 @@ def game(level,window):
                 window.blit(energy_level,(1050,420))
                 pygame.display.flip()
                 time.sleep(0.1)
-            for i in range(7):
+            for j in range(7):
                 window.blit(proxy_window,(0,0),(tile_size,tile_size,(2*vision_tile_count+1)*tile_size,(2*vision_tile_count+1)*tile_size))
                 window.blit(faces[player1.orientation],((vision_tile_count)*tile_size,(vision_tile_count)*tile_size))
                 window.blit(space_images_background[space_frame_index],(945,0),(0,0,355,945))
-                window.blit(time_portal_close[i], ((vision_tile_count - 1) * tile_size, vision_tile_count * tile_size))
+                window.blit(time_portal_close[j], ((vision_tile_count - 1) * tile_size, vision_tile_count * tile_size))
                 #updating timer,energy and floors
                 floor_number_text=Button(str(player1.floor),game_font_2,LIGHTNING_BLUE,BLACK,(1240,70))
                 timer_text=Button(str(timer),game_font_2,LIGHTNING_BLUE,BLACK,(1080,240))
@@ -503,6 +641,50 @@ def game(level,window):
                 pygame.display.flip()
                 time.sleep(0.1)
             teleporting=False
+        
+        if teleporting1:
+            for j in range(7):
+                window.blit(proxy_window,(0,0),(tile_size,tile_size,(2*vision_tile_count+1)*tile_size,(2*vision_tile_count+1)*tile_size))
+                window.blit(space_images_background[space_frame_index],(945,0),(0,0,355,945))
+                window.blit(space_portal_open[j], ((vision_tile_count - 1) * tile_size, vision_tile_count * tile_size))
+                #updating timer,energy and floors
+                floor_number_text=Button(str(player1.floor),game_font_2,LIGHTNING_BLUE,BLACK,(1240,70))
+                timer_text=Button(str(timer),game_font_2,LIGHTNING_BLUE,BLACK,(1080,240))
+                energy_level=remove_and_blit(energy_image,(6+188*player1.energy//ENERGY,6),(194,24))
+                #drawing other buttons and text
+                timer_text_1.draw(window)
+                floor_text.draw(window)
+                home.draw(window)
+                exit.draw(window)
+                restart.draw(window)
+                timer_text.draw(window)
+                floor_number_text.draw(window)
+                energy_text.draw(window)  
+                window.blit(energy_level,(1050,420))
+                pygame.display.flip()
+                time.sleep(0.1)
+            for j in range(7):
+                window.blit(proxy_window,(0,0),(tile_size,tile_size,(2*vision_tile_count+1)*tile_size,(2*vision_tile_count+1)*tile_size))
+                window.blit(faces[player1.orientation],((vision_tile_count)*tile_size,(vision_tile_count)*tile_size))
+                window.blit(space_images_background[space_frame_index],(945,0),(0,0,355,945))
+                window.blit(space_portal_close[j], ((vision_tile_count - 1) * tile_size, vision_tile_count * tile_size))
+                #updating timer,energy and floors
+                floor_number_text=Button(str(player1.floor),game_font_2,LIGHTNING_BLUE,BLACK,(1240,70))
+                timer_text=Button(str(timer),game_font_2,LIGHTNING_BLUE,BLACK,(1080,240))
+                energy_level=remove_and_blit(energy_image,(6+188*player1.energy//ENERGY,6),(194,24))
+                #drawing other buttons and text
+                timer_text_1.draw(window)
+                floor_text.draw(window)
+                home.draw(window)
+                exit.draw(window)
+                restart.draw(window)
+                timer_text.draw(window)
+                floor_number_text.draw(window)
+                energy_text.draw(window)  
+                window.blit(energy_level,(1050,420))
+                pygame.display.flip()
+                time.sleep(0.1)
+            teleporting1=False
     
         #drawing the game window from proxy window and orientation and other parameters over it
         window.blit(proxy_window,(0,0),(tile_size,tile_size,(2*vision_tile_count+1)*tile_size,(2*vision_tile_count+1)*tile_size))

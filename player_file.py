@@ -5,11 +5,11 @@ class player:
     def __init__(self,centre,maze,energy):
         self.tile=centre
         self.orientation=3
-        self.images=[]
         self.maze=maze
         self.floor=int((self.maze.shape[0]-1)/2)
         self.max_energy=energy
         self.energy=energy
+        self.checkpoint=centre
 def move(player,command):
     #commands can be 0,1,2,3,4 for stay,move up,move left,move down and move right respectively
     moves=[np.array([0,0,0]),np.array([0,1,0]),np.array([-1,0,0]),np.array([0,-1,0]),np.array([1,0,0]),np.array([0,0,1]),np.array([0,0,-1])]
@@ -31,5 +31,4 @@ def move(player,command):
         player.tile=np.copy(check_move)
         if command!=0:
             player.energy-=1
-        # if command!=0:
-        #     print(player.tile)
+            player.energy=min(player.energy,player.max_energy)
