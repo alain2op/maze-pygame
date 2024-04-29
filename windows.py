@@ -19,8 +19,8 @@ MOVEMENT_DELAY = 150  # in milliseconds
 BLACK = (0, 0, 0)
 GREEN=(200,255,200)
 BLUE=(0,0,255)
-TIMER=300
-ENERGY=600
+TIMER=180
+ENERGY=360
 LIGHTNING_BLUE=(0,191,255)
 VISION_TILE_COUNT=3
 #a function to remove part(rectangle) of an image and blit the remaining part of the image
@@ -210,19 +210,19 @@ def leader(window):
     surf1 = []
     rect1 = []
     for i in range(len(scores1)):
-        surf1.append(button_font.render("{}".format(scores1[i]),True,LIGHTNING_BLUE))
+        surf1.append(button_font.render("{}. {}".format(i+1,scores1[i]),True,LIGHTNING_BLUE))
         rect1.append(surf1[i].get_rect(center = (230,220+i*140)))
 
     surf2 = []
     rect2 = []
     for i in range(len(scores2)):
-        surf2.append(button_font.render("{}".format(scores2[i]),True,LIGHTNING_BLUE))
+        surf2.append(button_font.render("{}. {}".format(i+1,scores2[i]),True,LIGHTNING_BLUE))
         rect2.append(surf2[i].get_rect(center = (650,220+i*140)))
 
     surf3 = []
     rect3 = []
     for i in range(len(scores3)):
-        surf3.append(button_font.render("{}".format(scores3[i]),True,LIGHTNING_BLUE))
+        surf3.append(button_font.render("{}. {}".format(i+1,scores3[i]),True,LIGHTNING_BLUE))
         rect3.append(surf3[i].get_rect(center = (1070,220+i*140)))
 
 
@@ -260,15 +260,6 @@ def leader(window):
 
             pygame.display.flip()
                     
-            
-
-
-
-
-
-
-
-
 
 def start(window):
 
@@ -276,20 +267,18 @@ def start(window):
     start_image = pygame.transform.scale(pygame.image.load("start.jpeg"), (WIDTH, HEIGHT))
     title_font = pygame.font.Font("HARRYP__.TTF", 180)
     button_font = pygame.font.Font("HARRYP__.TTF", 80)
+    small_button_font=pygame.font.Font("HARRYP__.TTF", 60)
     exit_font=pygame.font.Font("HARRYP__.TTF", 120)
     labyrinth = Button("labyrinth", button_font, GOLD, BLACK, (100, 600))
     wormhole = Button("wormhole", button_font, GOLD, BLACK, (500, 600))
     singularity = Button("singularity", button_font, GOLD, BLACK, (900, 600))
-    exit_button=Button("Exit",exit_font,GOLD,BLACK,(530,700))
-    manual=Button("A guide through space-time",button_font,GOLD,BLACK,(50,840))
-    leaderboard=Button("Hall of Fame",button_font,GOLD,BLACK,(950,840))
+    exit_button=Button("Exit",exit_font,GOLD,BLACK,(600,700))
+    manual=Button("A guide through space-time",small_button_font,GOLD,BLACK,(50,840))
+    leaderboard=Button("Hall of Fame",small_button_font,GOLD,BLACK,(950,840))
     title = "Lost in Space-Time"
     title_positions = [(300, 200), (550, 200), (800, 400)]#position of each word of the title for the animation done
 
     # manual1_open,manual2_open,leaderboard_open=False
-    manual1_window=pygame.transform.scale(pygame.image.load("manual1.png"), (WIDTH, HEIGHT))
-    manual2_window=pygame.transform.scale(pygame.image.load("manual2.png"), (WIDTH, HEIGHT))
-    leaderboard_window=pygame.transform.scale(pygame.image.load("leaderboard.png"), (WIDTH, HEIGHT))
 
 
 #logic for game opening animation, where each word appears after a delay
@@ -456,8 +445,8 @@ def game(level,window):
     teleport_times=[]#stores the timestamps when to teleport
     teleport_pushback_times=[]#stores how long back to teleport
     for i in range(20):
-        teleport_times.append(random.randint(50000,60000))#teleports a random time between 50-60s
-        teleport_pushback_times.append(random.randint(15000,25000))# teleports back 15-25s
+        teleport_times.append(random.randint(30000,40000))#teleports a random time between 50-60s
+        teleport_pushback_times.append(random.randint(15000,20000))# teleports back 15-25s
     teleport_index=0#to go through the arrays
     last_tracker_time=pygame.time.get_ticks()#to track tiles every second
     last_teleport_time=pygame.time.get_ticks()#to track teleportation
@@ -529,12 +518,12 @@ def game(level,window):
         #player wins if he reached the endpoint
         if player1.tile[0]==end_point[0] and player1.tile[1]==end_point[1] and player1.tile[2]==end_point[2]:
             time.sleep(1)
-            score=timer+(300*player1.energy//ENERGY)+500
+            score=300*timer//TIMER+(300*player1.energy//ENERGY)+500
             return 3,window,[1,int(score)],level #1 is for winning and 0 if lost
         
         #player loses if timer or energy becomes 0
         if (timer<=0) or (player1.energy<=0):
-            score=timer+300*player1.energy//ENERGY
+            score=300*timer//TIMER+300*player1.energy//ENERGY
             return 3,window,[0,int(score)],level
         
         #consumption of potion
