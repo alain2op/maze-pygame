@@ -90,6 +90,185 @@ class sprites:
             frames.append(scaled_frame)
         return frames
 
+def guide(window):
+
+    guide = True
+    manual1 = True
+    manual2 = False
+    button_font = pygame.font.Font("HARRYP__.TTF", 80)
+
+    manual1_window=pygame.transform.scale(pygame.image.load("manual1.png"), (WIDTH, HEIGHT))
+    manual2_window=pygame.transform.scale(pygame.image.load("manual2.png"), (WIDTH, HEIGHT))
+
+    next_button = Button("Next",button_font,GOLD,BLACK,(100,800))
+    close1_button = Button("Close",button_font,GOLD,BLACK,(1100,800))
+    previous_button = Button("Previous",button_font,GOLD,BLACK,(100,800))
+    close2_button = Button("Close",button_font,GOLD,BLACK,(1100,800))
+
+    buttons = [next_button,close1_button,previous_button,close2_button]
+
+    while guide:
+        
+        if manual1:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    start_running = False
+                elif event.type == pygame.MOUSEMOTION:
+                    mouse_pos = pygame.mouse.get_pos()
+                    for button in buttons:
+                        if button.is_hovered(mouse_pos):
+                            button.set_hovered(True)
+                        else:
+                            button.set_hovered(False)
+                elif event.type == pygame.MOUSEBUTTONDOWN:
+                    if event.button == 1: 
+                        mouse_pos = pygame.mouse.get_pos()
+                        if next_button.is_hovered(mouse_pos):
+                            manual1 = False
+                            manual2 = True
+                        elif close1_button.is_hovered(mouse_pos):
+                            guide = False
+                            manual2 = False
+                            manual1 = False
+
+            
+            window.blit(manual1_window,(0,0))
+            close1_button.draw(window)
+            next_button.draw(window)
+
+            pygame.display.flip()
+        else:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    start_running = False
+                elif event.type == pygame.MOUSEMOTION:
+                    mouse_pos = pygame.mouse.get_pos()
+                    for button in buttons:
+                        if button.is_hovered(mouse_pos):
+                            button.set_hovered(True)
+                        else:
+                            button.set_hovered(False)
+                elif event.type == pygame.MOUSEBUTTONDOWN:
+                    if event.button == 1: 
+                        mouse_pos = pygame.mouse.get_pos()
+                        if close2_button.is_hovered(mouse_pos):
+                            guide = False
+                            manual2 = False
+                            manual1 = False
+                        elif previous_button.is_hovered(mouse_pos):
+                            manual1 = True
+                            manual2 = False
+
+            
+            window.blit(manual2_window,(0,0))
+            close2_button.draw(window)
+            previous_button.draw(window)
+
+            pygame.display.flip()
+
+
+
+def leader(window):
+
+    leader = True
+
+    button_font = pygame.font.Font("HARRYP__.TTF", 80)
+
+    leaderboard_window=pygame.transform.scale(pygame.image.load("leaderboard.png"), (WIDTH, HEIGHT))
+
+    close_button = Button("Close",button_font,GOLD,BLACK,(600,820))
+
+    labyrinth = button_font.render("Labyrinth",True,GOLD)
+    wormhole = button_font.render("Wormhole",True,GOLD)
+    singularity = button_font.render("Singularity",True,GOLD)
+
+    laby_rect = labyrinth.get_rect(center = (230,100))
+    worm_rect = wormhole.get_rect(center = (650,100))
+    sing_rect = singularity.get_rect(center = (1070,100))
+
+    scores1 = []
+    with open("highscores_1.txt",'r') as file:
+        lines = file.readlines()
+        for i in range(len(lines)):
+            lines[i] = int(lines[i])
+            scores1.append(lines[i])
+
+    scores2 = []
+    with open("highscores_2.txt",'r') as file:
+        lines = file.readlines()
+        for i in range(len(lines)):
+            lines[i] = int(lines[i])
+            scores2.append(lines[i])
+
+    scores3 = []
+    with open("highscores_3.txt",'r') as file:
+        lines = file.readlines()
+        for i in range(len(lines)):
+            lines[i] = int(lines[i])
+            scores3.append(lines[i])
+
+    surf1 = []
+    rect1 = []
+    for i in range(len(scores1)):
+        surf1.append(button_font.render("{}".format(scores1[i]),True,LIGHTNING_BLUE))
+        rect1.append(surf1[i].get_rect(center = (230,220+i*140)))
+
+    surf2 = []
+    rect2 = []
+    for i in range(len(scores2)):
+        surf2.append(button_font.render("{}".format(scores2[i]),True,LIGHTNING_BLUE))
+        rect2.append(surf2[i].get_rect(center = (650,220+i*140)))
+
+    surf3 = []
+    rect3 = []
+    for i in range(len(scores3)):
+        surf3.append(button_font.render("{}".format(scores3[i]),True,LIGHTNING_BLUE))
+        rect3.append(surf3[i].get_rect(center = (1070,220+i*140)))
+
+
+
+
+    while leader:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                start_running = False
+            elif event.type == pygame.MOUSEMOTION:
+                mouse_pos = pygame.mouse.get_pos()
+                if close_button.is_hovered(mouse_pos):
+                    close_button.set_hovered(True)
+                else:
+                    close_button.set_hovered(False)                  
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:  # Left mouse button
+                    mouse_pos = pygame.mouse.get_pos()
+                    if close_button.is_hovered(mouse_pos):
+                        leader = False
+            
+            window.blit(leaderboard_window,(0,0))
+            window.blit(labyrinth,laby_rect)
+            window.blit(wormhole,worm_rect)
+            window.blit(singularity,sing_rect)
+
+            for i in range(len(scores1)):
+                window.blit(surf1[i],rect1[i])
+            for i in range(len(scores2)):
+                window.blit(surf2[i],rect2[i])
+            for i in range(len(scores3)):
+                window.blit(surf3[i],rect3[i])
+
+            close_button.draw(window)
+
+            pygame.display.flip()
+                    
+            
+
+
+
+
+
+
+
+
 
 def start(window):
 
@@ -101,9 +280,17 @@ def start(window):
     labyrinth = Button("labyrinth", button_font, GOLD, BLACK, (100, 600))
     wormhole = Button("wormhole", button_font, GOLD, BLACK, (500, 600))
     singularity = Button("singularity", button_font, GOLD, BLACK, (900, 600))
-    exit_button=Button("Exit",exit_font,GOLD,BLACK,(530,720))
+    exit_button=Button("Exit",exit_font,GOLD,BLACK,(530,700))
+    manual=Button("A guide through space-time",button_font,GOLD,BLACK,(50,840))
+    leaderboard=Button("Hall of Fame",button_font,GOLD,BLACK,(950,840))
     title = "Lost in Space-Time"
     title_positions = [(300, 200), (550, 200), (800, 400)]#position of each word of the title for the animation done
+
+    # manual1_open,manual2_open,leaderboard_open=False
+    manual1_window=pygame.transform.scale(pygame.image.load("manual1.png"), (WIDTH, HEIGHT))
+    manual2_window=pygame.transform.scale(pygame.image.load("manual2.png"), (WIDTH, HEIGHT))
+    leaderboard_window=pygame.transform.scale(pygame.image.load("leaderboard.png"), (WIDTH, HEIGHT))
+
 
 #logic for game opening animation, where each word appears after a delay
     window.blit(start_image, (0, 0))
@@ -121,8 +308,16 @@ def start(window):
     
     start_running = True
     while start_running:
+        window.blit(start_image, (0, 0))
+
+        for word_no in range(len(words)):
+            text_surface = title_font.render(words[word_no], True, GOLD)
+            text_rect = text_surface.get_rect()
+            text_rect.center = title_positions[word_no]
+            window.blit(text_surface, text_rect)
+
         # each of the 4 buttons is being drawn
-        buttons=[labyrinth,wormhole,singularity,exit_button]
+        buttons=[labyrinth,wormhole,singularity,exit_button,leaderboard,manual]
         for button in buttons:
             button.draw(window)
 
@@ -148,7 +343,12 @@ def start(window):
                         return 2,window,3
                     elif exit_button.is_hovered(mouse_pos):
                         return 0,window,0
-        #updating displays for hovering effect
+                    elif manual.is_hovered(mouse_pos):
+                        guide(window)
+                    elif leaderboard.is_hovered(mouse_pos):
+                        leader(window)
+
+                    
         pygame.display.flip()
     pygame.quit()
     sys.exit() 
@@ -197,7 +397,7 @@ def game(level,window):
                 index=random.randint(0,number_of_zeros-1)
                 potion_tile=np.array([zeros[0][index],zeros[1][index],zeros[2][index]])
                 for potion_tile_1 in potion_tiles:
-                    if (abs(potion_tile[1]-potion_tile_1[1])+abs(potion_tile[2]-potion_tile_1[2])<25):
+                    if (abs(potion_tile[1]-potion_tile_1[1])+abs(potion_tile[2]-potion_tile_1[2])<20):
                         found=False
                 if found:
                     potion_tiles.append(potion_tile)
@@ -713,6 +913,9 @@ def game(level,window):
         runs+=1
     pygame.quit()
     sys.exit()
+
+
+
 
 
 def end(window,level,result):
