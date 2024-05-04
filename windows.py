@@ -226,8 +226,6 @@ def leader(window):
         rect3.append(surf3[i].get_rect(center = (1070,220+i*140)))
 
 
-
-
     while leader:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -410,6 +408,7 @@ def game(level,window):
                 if zeros[0][index]==i:
                     found=True
                     potion_tiles.append(np.array([zeros[0][index],zeros[1][index],zeros[2][index]]))
+    potion_tiles_init=potion_tiles[:]
 
     #creating the instance of the character
     player1 = player_file.player( centre, generated_maze,ENERGY)
@@ -624,6 +623,7 @@ def game(level,window):
                         last_teleport_time=current_time
                         player1=player_file.player(centre,generated_maze,ENERGY)
                         timer=TIMER
+                        potion_tiles=potion_tiles_init[:]
 
         #conditions for movement and storing walk and orientation variables for animation and posture, there is a movement delay of 150ms for handling the sensitivity, though it doesn't make sense due to the delays of animation,but kept just in case  
         moved=False

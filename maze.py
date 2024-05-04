@@ -243,7 +243,7 @@ def maze_generator(size,floors):
     for i in range(ITERATIONS):
         zeros=np.where(maze==0)
         freq = 30
-        poss_moves = [1, 3] + [i for i in range(6) if (i!=1 and i!=3) for _ in range(freq)]
+        poss_moves = [1, 3] + [i for i in range(6) if (i!=1 and i!=3) for _ in range(freq)]#increasing the frequency of a tile being created to be in the same floor
         rand_zero=random.randint(0,zeros[0].size-1)
         tile=np.array([zeros[0][rand_zero],zeros[1][rand_zero],zeros[2][rand_zero]])
         if((tile[2]/(size-1)==0 or tile[2]/(size-1)==1) and (tile[1]/(size-1)==0 or tile[1]/(size-1)==1) and (tile[0]==0 or tile[0]==floors-1)):
@@ -280,5 +280,4 @@ def maze_generator(size,floors):
                     maze[int(tile[0]),int(tile[1]),int(tile[2])]=1
                 tile-=moves[move]
                 poss_moves.remove(move)
-    #finally setting the other corners to 1 so that only 1 end is point is left
     return maze,path,end
